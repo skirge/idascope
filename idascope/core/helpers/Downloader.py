@@ -29,14 +29,14 @@
 ########################################################################
 
 # TODO: Make this finally multi-threaded.
-import httplib
+import http.client
 
 import idascope.core.helpers.QtShim as QtShim
 QtGui = QtShim.get_QtGui()
 QtCore = QtShim.get_QtCore()
 Signal = QtShim.get_Signal()
 
-from ThreadedDownloader import ThreadedDownloader
+from .ThreadedDownloader import ThreadedDownloader
 
 
 class TempQThread(QtCore.QThread):
@@ -60,7 +60,6 @@ class Downloader(QtCore.QObject):
 
     def __init__(self):
         super(Downloader, self).__init__()
-        self.httplib = httplib
         self.TempQThread = TempQThread
         self.ThreadedDownloader = ThreadedDownloader
         self._data = None
@@ -107,18 +106,18 @@ class Downloader(QtCore.QObject):
         host = url[8:url.find("/", 8)]
         path = url[url.find("/", 8):]
         try:
-            conn = self.httplib.HTTPSConnection(host)
+            conn = http.client.HTTPSConnection(host)
             conn.request("GET", path)
             response = conn.getresponse()
             if response.status == 200:
-                print "[+] Downloaded from: %s" % (url)
+                print("[+] Downloaded from: %s" % (url))
                 self._data = response.read()
             else:
-                print "[-] Download failed: %s (%s %s)" % (url, response.status, response.reason)
+                print("[-] Download failed: %s (%s %s)" % (url, response.status, response.reason))
                 self._data = "Download failed (%s %s)!" % (response.status, response.reason)
             conn.close()
         except Exception as exc:
-            print ("[!] Downloader.download: Exception while downloading: %s" % exc)
+            print(("[!] Downloader.download: Exception while downloading: %s" % exc))
             self._data = None
         return self._data
 

@@ -81,7 +81,7 @@ class ApiMatcher():
         enum_index = 0
         if arg_number == enum_index:
             enums = self.enums['MACRO_HKEY']
-            if arg_value in enums.keys():
+            if arg_value in list(enums.keys()):
                 arg_value = enums[arg_value]
         return arg_value
 
@@ -151,8 +151,8 @@ class ApiMatcher():
             apiOfSequence.decode("ascii")
         except:
             if self.config.debug:
-                print "SemanticExplorer._matchAPIs - addr: 0x%x" % addr
-                print "SemanticExplorer._matchAPIs - apiOfSequence: %s" % apiOfSequence.encode("hex")
+                print("SemanticExplorer._matchAPIs - addr: 0x%x" % addr)
+                print("SemanticExplorer._matchAPIs - apiOfSequence: %s" % apiOfSequence.encode("hex"))
             return False
         return apiOfSemantic in apiOfSequence
 

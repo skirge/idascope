@@ -33,9 +33,9 @@ import os
 import re
 import time
 
-from helpers import JsonHelper
+from .helpers import JsonHelper
 
-from IdaProxy import IdaProxy
+from .IdaProxy import IdaProxy
 from idascope.core.structures.FunctionContext import FunctionContext
 from idascope.core.structures.FunctionContextFilter import FunctionContextFilter
 from idascope.core.structures.CallContext import CallContext
@@ -78,7 +78,7 @@ class SemanticIdentifier():
 
     def _getRealApiNames(self):
         num_imports = self.ida_proxy.get_import_module_qty()
-        for i in xrange(0, num_imports):
+        for i in range(0, num_imports):
             self.ida_proxy.enum_import_names(i, self._cbEnumImports)
 
     def lookupRealApiName(self, api_name):
@@ -122,7 +122,8 @@ class SemanticIdentifier():
         """
         semantics_file = open(semantics_filename, "r")
         semantics = semantics_file.read()
-        return json.loads(semantics, object_hook=JsonHelper.decode_dict)
+        #return json.loads(semantics, object_hook=JsonHelper.decode_dict)
+        return json.loads(semantics)
 
     def _setSemantics(self, semantics_entry):
         semantics_content = {}
@@ -172,7 +173,7 @@ class SemanticIdentifier():
         """
         number_of_blocks = 0
         function_address = self.getFunctionAddressForAddress(address)
-        if function_address in self.last_scan_result.keys():
+        if function_address in list(self.last_scan_result.keys()):
             number_of_blocks = self.last_scan_result[function_address].number_of_basic_blocks
         return number_of_blocks
 
@@ -208,7 +209,7 @@ class SemanticIdentifier():
                     call_ctx.group = semantic_tag["group"]
                     call_ctx.parameter_contexts = self._resolveApiCall(call_ctx)
                     function_ctx.call_contexts.append(call_ctx)
-        print ("  [\\] Analysis took %3.2f seconds." % (self.time.time() - time_before))
+        print(("  [\\] Analysis took %3.2f seconds." % (self.time.time() - time_before)))
 
     def _getAllRefsTo(self, addr):
         code_ref_addrs = [ref for ref in self.ida_proxy.CodeRefsTo(addr, 0)]
@@ -238,7 +239,7 @@ class SemanticIdentifier():
         """
         function_ctx = None
         function_address = self.ida_proxy.LocByName(self.ida_proxy.GetFunctionName(addr))
-        if function_address not in self.last_scan_result.keys():
+        if function_address not in list(self.last_scan_result.keys()):
             function_ctx = self.FunctionContext()
             function_ctx.function_address = function_address
             function_ctx.function_name = self.ida_proxy.GetFunctionName(function_address)
@@ -266,7 +267,7 @@ class SemanticIdentifier():
             function_ctx = self._getFunctionContext(function_ea)
             for block in function_chart:
                 num_blocks += 1
-                for instruction in self.ida_proxy.Heads(block.startEA, block.endEA):
+                for instruction in self.ida_proxy.Heads(block.start_ea, block.end_ea):
                     num_instructions += 1
                     if self.ida_proxy.isCode(self.ida_proxy.GetFlags(instruction)):
                         for ref in self._getAllRefsFrom(instruction):
@@ -279,7 +280,7 @@ class SemanticIdentifier():
             function_ctx.number_of_xrefs_from = len(xrefs_from)
             function_ctx.number_of_basic_blocks = num_blocks
             function_ctx.number_of_instructions = num_instructions
-        print ("  [\\] Analysis took %3.2f seconds." % (self.time.time() - time_before))
+        print(("  [\\] Analysis took %3.2f seconds." % (self.time.time() - time_before)))
 
     def getFunctionAddressForAddress(self, address):
         """
@@ -317,7 +318,7 @@ class SemanticIdentifier():
         @type tag_only: bool
         @return: (list of int) The addresses of covered functions.
         """
-        all_addresses = self.last_scan_result.keys()
+        all_addresses = list(self.last_scan_result.keys())
         filtered_addresses = []
         if context_filter.display_all:
             filtered_addresses = all_addresses
@@ -344,7 +345,7 @@ class SemanticIdentifier():
         @return (list of str) The tags found.
         """
         tags = []
-        for function_address in self.last_scan_result.keys():
+        for function_address in list(self.last_scan_result.keys()):
             for call_ctx in self.last_scan_result[function_address].call_contexts:
                 if call_ctx.tag not in tags:
                     tags.append(call_ctx.tag)
@@ -357,7 +358,7 @@ class SemanticIdentifier():
         """
         tag_to_group_mapping = self._createTagToGroupMapping()
         groups = []
-        for function_address in self.last_scan_result.keys():
+        for function_address in list(self.last_scan_result.keys()):
             for call_ctx in self.last_scan_result[function_address].call_contexts:
                 if tag_to_group_mapping[call_ctx.tag] not in groups:
                     groups.append(tag_to_group_mapping[call_ctx.tag])
@@ -378,7 +379,7 @@ class SemanticIdentifier():
         """
         tags = []
         function_address = self.getFunctionAddressForAddress(address)
-        if function_address in self.last_scan_result.keys():
+        if function_address in list(self.last_scan_result.keys()):
             for call_ctx in self.last_scan_result[function_address].call_contexts:
                 if call_ctx.tag not in tags:
                     tags.append(call_ctx.tag)
@@ -404,7 +405,7 @@ class SemanticIdentifier():
         @return: (list of CallContext data objects) The call contexts identified by the scanning of this function
         """
         function_address = self.getFunctionAddressForAddress(address)
-        if function_address in self.last_scan_result.keys():
+        if function_address in list(self.last_scan_result.keys()):
             all_call_ctx = self.last_scan_result[function_address].call_contexts
             return [call_ctx for call_ctx in all_call_ctx if call_ctx.tag != ""]
 
@@ -417,7 +418,7 @@ class SemanticIdentifier():
         functions_and_tags = {}
         for function in self.getIdentifiedFunctionAddresses():
             call_contexts = self.getTaggedApisForFunctionAddress(function)
-            if function not in functions_and_tags.keys():
+            if function not in list(functions_and_tags.keys()):
                 functions_and_tags[function] = {}
             for call_ctx in call_contexts:
                 functions_and_tags[function][call_ctx.address_of_call] = call_ctx.tag
@@ -431,7 +432,7 @@ class SemanticIdentifier():
                  ("new_function_name", str), ("function_address", int)
         """
         functions_to_rename = []
-        for function_address_to_tag in self.last_scan_result.keys():
+        for function_address_to_tag in list(self.last_scan_result.keys()):
             new_function_name = self.last_scan_result[function_address_to_tag].function_name
             # has the function still a dummy name?
             if self.ida_proxy.GetFlags(function_address_to_tag) & self.ida_proxy.FF_LABL > 0:
@@ -467,8 +468,8 @@ class SemanticIdentifier():
                         name_suffix = 0
                         while rval == False:
                             if name_suffix > 40:
-                                print("[!] Potentially more than 50 wrappers for function %s, " \
-                                    "please report this IDB ;)" % w_name)
+                                print(("[!] Potentially more than 50 wrappers for function %s, " \
+                                    "please report this IDB ;)" % w_name))
                                 break
                             demangled_name = self.ida_proxy.Demangle(w_name, self.ida_proxy.GetLongPrm(self.ida_proxy.INF_SHORT_DN))
                             if demangled_name != None and demangled_name != w_name:
@@ -481,10 +482,10 @@ class SemanticIdentifier():
                             rval = self.ida_proxy.MakeNameEx(func_ea, f_name, \
                                 self.ida_proxy.SN_NOCHECK | self.ida_proxy.SN_NOWARN)
                         if rval == True:
-                            print("[+] Identified and renamed potential wrapper @ [%08x] to [%s]" % \
-                                (func_ea, f_name))
+                            print(("[+] Identified and renamed potential wrapper @ [%08x] to [%s]" % \
+                                (func_ea, f_name)))
                             num_wrappers_renamed += 1
-        print("[+] Renamed %d functions with their potentially wrapped name." % num_wrappers_renamed)
+        print(("[+] Renamed %d functions with their potentially wrapped name." % num_wrappers_renamed))
 
     def _checkWrapperHeuristics(self, func_ea):
         """
@@ -608,8 +609,8 @@ class SemanticIdentifier():
                     type_and_name["name"] = parameter[parameter.rfind(" "):].strip()
                     api_signature["parameters"].append(type_and_name)
         else:
-            print ("[-] SemanticIdentifier._getApiSignature: No API/function signature for \"%s\" @ 0x%x available. " \
-            + "(non-critical)") % (api_name, api_location)
+            print(("[-] SemanticIdentifier._getApiSignature: No API/function signature for \"%s\" @ 0x%x available. " \
+            + "(non-critical)") % (api_name, api_location))
         # TODO:
         # here should be a check for the calling convention
         # currently, list list is simply reversed to match the order parameters are pushed to the stack
@@ -626,8 +627,8 @@ class SemanticIdentifier():
         push_addresses = []
         function_chart = self.ida_proxy.FlowChart(self.ida_proxy.get_func(address))
         for block in function_chart:
-            if block.startEA <= address < block.endEA:
-                for instruction_addr in self.ida_proxy.Heads(block.startEA, block.endEA):
+            if block.start_ea <= address < block.end_ea:
+                for instruction_addr in self.ida_proxy.Heads(block.start_ea, block.end_ea):
                     if self.ida_proxy.GetMnem(instruction_addr) == "push":
                         push_addresses.append(instruction_addr)
                     if instruction_addr >= address:
@@ -637,12 +638,12 @@ class SemanticIdentifier():
     def createFunctionGraph(self, func_address):
         graph = {"root": func_address, "nodes": {}}
         unexplored = set()
-        if func_address in self.last_scan_result.keys():
+        if func_address in list(self.last_scan_result.keys()):
             graph["nodes"][func_address] = self.last_scan_result[func_address].calls_from
             unexplored = set(self.last_scan_result[func_address].calls_from)
             while len(unexplored) > 0:
                 current_function = unexplored.pop()
-                if current_function in graph["nodes"].keys() or current_function not in self.last_scan_result.keys():
+                if current_function in list(graph["nodes"].keys()) or current_function not in list(self.last_scan_result.keys()):
                     continue
                 else:
                     graph["nodes"][current_function] = self.last_scan_result[current_function].calls_from
@@ -673,8 +674,8 @@ class SemanticIdentifier():
         """
         nicely print the last scan result (mostly used for debugging)
         """
-        for function_address in self.last_scan_result.keys():
-            print ("0x%x - %s -> ") % (function_address, self.ida_proxy.GetFunctionName(function_address)) \
-                + ", ".join(self.getTagsForFunctionAddress(function_address))
+        for function_address in list(self.last_scan_result.keys()):
+            print(("0x%x - %s -> ") % (function_address, self.ida_proxy.GetFunctionName(function_address)) \
+                + ", ".join(self.getTagsForFunctionAddress(function_address)))
             for call_ctx in self.last_scan_result[function_address].call_contexts:
-                print ("    0x%x - %s (%s)") % (call_ctx.address_of_call, call_ctx.called_function_name, call_ctx.tag)
+                print(("    0x%x - %s (%s)") % (call_ctx.address_of_call, call_ctx.called_function_name, call_ctx.tag))

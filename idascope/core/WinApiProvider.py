@@ -32,9 +32,9 @@ import json
 import os
 import string
 
-from helpers import JsonHelper
-from helpers.Downloader import Downloader
-from IdaProxy import IdaProxy
+from .helpers import JsonHelper
+from .helpers.Downloader import Downloader
+from .IdaProxy import IdaProxy
 
 
 class WinApiProvider():
@@ -65,7 +65,8 @@ class WinApiProvider():
         Loads the keywords database from the file specified in the config.
         """
         keywords_file = open(self.idascope_config.winapi_keywords_file, "r")
-        self.winapi_data = json.loads(keywords_file.read(), object_hook=JsonHelper.decode_dict)
+        #self.winapi_data = json.loads(keywords_file.read(), object_hook=JsonHelper.decode_dict)
+        self.winapi_data = json.loads(keywords_file.read())
 
     def registerDataReceiver(self, receiving_function):
         """
@@ -80,7 +81,7 @@ class WinApiProvider():
         """
         When a download of MSDN data is finished, notice all receivers.
         """
-        print "WinApiProvider.onDownloadFinished(): DOWNLOAD FINISHED"
+        print("WinApiProvider.onDownloadFinished(): DOWNLOAD FINISHED")
         data = self.downloader.get_data()
         if not data:
             data = "Download failed! Try again or check your Internet connection."
@@ -93,7 +94,7 @@ class WinApiProvider():
         This is evaluated based on whether the keywords database has been loaded or not.
         @return: (bool) availablity of the MSDN database
         """
-        if len(self.winapi_data.keys()) > 0:
+        if len(list(self.winapi_data.keys())) > 0:
             return True
         return False
 
@@ -117,7 +118,7 @@ class WinApiProvider():
         @type keyword_initial: str
         @return: (a list of str) keywords in WinApi that start with that initial.
         """
-        if keyword_initial in self.winapi_data.keys():
+        if keyword_initial in list(self.winapi_data.keys()):
             return sorted(self.winapi_data[keyword_initial], key=str.lower)
         else:
             return []
@@ -243,7 +244,7 @@ class WinApiProvider():
         """
         if len(keyword) > 0:
             keyword_initial = keyword[0].lower()
-            if keyword_initial in self.winapi_data.keys():
+            if keyword_initial in list(self.winapi_data.keys()):
                 if keyword in self.winapi_data[keyword_initial]:
                     return self.winapi_data[keyword_initial][keyword]
         return []

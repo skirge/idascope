@@ -93,7 +93,7 @@ class CryptoIdentifier():
             function_dgraph = {}
             blocks_in_loops = set()
             for current_block in function_chart:
-                block = self.cc.AritlogBasicBlock(current_block.startEA, current_block.endEA)
+                block = self.cc.AritlogBasicBlock(current_block.start_ea, current_block.end_ea)
                 for instruction in self.ida_proxy.Heads(block.start_ea, block.end_ea):
                     if self.ida_proxy.isCode(self.ida_proxy.GetFlags(instruction)):
                         mnemonic = self.ida_proxy.GetMnem(instruction)
@@ -104,12 +104,12 @@ class CryptoIdentifier():
                             calls_in_function += 1
                 function_blocks.append(block)
                 # prepare graph for Tarjan's algorithm
-                succeeding_blocks = [succ.startEA for succ in current_block.succs()]
-                function_dgraph[current_block.startEA] = succeeding_blocks
+                succeeding_blocks = [succ.start_ea for succ in current_block.succs()]
+                function_dgraph[current_block.start_ea] = succeeding_blocks
                 # add trivial loops
-                if current_block.startEA in succeeding_blocks:
+                if current_block.start_ea in succeeding_blocks:
                     block.is_contained_in_trivial_loop = True
-                    blocks_in_loops.update([current_block.startEA])
+                    blocks_in_loops.update([current_block.start_ea])
             # perform Tarjan's algorithm to identify strongly connected components (= loops) in the function graph
             strongly_connected = self.graph_helper.calculateStronglyConnectedComponents(function_dgraph)
             non_trivial_loops = [component for component in strongly_connected if len(component) > 1]
@@ -121,7 +121,7 @@ class CryptoIdentifier():
                     block.is_contained_in_loop = True
                 block.num_calls_in_function = calls_in_function
             self.aritlog_blocks.extend(function_blocks)
-        print ("  [\\] Analysis took %3.2f seconds." % (self.time.time() - time_before))
+        print(("  [\\] Analysis took %3.2f seconds." % (self.time.time() - time_before)))
 
         return self.getAritlogBlocks(self.low_rating_threshold, self.high_rating_threshold,
             self.low_instruction_threshold, self.high_instruction_threshold,
@@ -221,21 +221,21 @@ class CryptoIdentifier():
         segments = self.getSegmentData()
         print ("  [|] Segments under analysis: ")
         for segment in segments:
-            print ("      " + str(segment))
-        print ("  [|] PatternManager initialized, number of signatures: %d" % len(self.pm.signatures))
+            print(("      " + str(segment)))
+        print(("  [|] PatternManager initialized, number of signatures: %d" % len(self.pm.signatures)))
         keywords = self.pm.getTokenizedSignatures(pattern_size)
-        print ("  [|] PatternManager tokenized patterns into %d chunks of %d bytes" % \
-            (len(keywords.keys()), pattern_size))
-        for keyword in keywords.keys():
+        print(("  [|] PatternManager tokenized patterns into %d chunks of %d bytes" % \
+            (len(list(keywords.keys())), pattern_size)))
+        for keyword in list(keywords.keys()):
             for segment in segments:
                 crypt_results.extend([self.cc.CryptoSignatureHit(segment.start_ea + match.start(), \
                     keywords[keyword], keyword) for match in self.re.finditer(self.re.escape(keyword), segment.data)])
         print ("  [|] PatternManager now scanning variable signatures")
         variable_matches = self.scanVariablePatterns()
         crypt_results.extend(variable_matches)
-        print ("  [\\] Full matching took %3.2f seconds and resulted in %d hits." % \
+        print(("  [\\] Full matching took %3.2f seconds and resulted in %d hits." % \
             (self.time.time() - time_before_matching, \
-            len(crypt_results)))
+            len(crypt_results))))
         self.signature_hits = crypt_results
         return crypt_results
 
@@ -245,7 +245,7 @@ class CryptoIdentifier():
         decoded_base64 = self.getDecodedBase64Strings()
         temporary_segment = self.mapBase64ToTemporarySegment(decoded_base64)
         variable_signatures = self.pm.getVariableSignatures()
-        for var_sig in variable_signatures.keys():
+        for var_sig in list(variable_signatures.keys()):
             current_seg = self.ida_proxy.FirstSeg()
             seg_end = self.ida_proxy.SegEnd(current_seg)
             while current_seg != self.ida_proxy.BAD_ADDR:
@@ -328,7 +328,7 @@ class CryptoIdentifier():
         @type signature_name: str
         @return: (int) length of the signature.
         """
-        for item in self.pm.signatures.items():
+        for item in list(self.pm.signatures.items()):
             if item[1] == signature_name:
                 return len(item[0])
         return 0

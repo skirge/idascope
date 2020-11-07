@@ -27,8 +27,8 @@
 import idascope.core.helpers.QtShim as QtShim
 QMainWindow = QtShim.get_QMainWindow()
 
-from NumberQTableWidgetItem import NumberQTableWidgetItem
-from BoundsEditor import BoundsEditor
+from .NumberQTableWidgetItem import NumberQTableWidgetItem
+from .BoundsEditor import BoundsEditor
 
 
 class CryptoIdentificationWidget(QMainWindow):
@@ -36,7 +36,7 @@ class CryptoIdentificationWidget(QMainWindow):
     def __init__(self, parent):
         self.cc = parent.cc
         self.cc.QMainWindow.__init__(self)
-        print "[|] loading CryptoIdentificationWidget"
+        print("[|] loading CryptoIdentificationWidget")
         # enable access to shared IDAscope modules
         self.parent = parent
         self.name = "Crypto"
@@ -280,13 +280,13 @@ class CryptoIdentificationWidget(QMainWindow):
             tmp_dict = {}
             for block in aritlog_blocks:
                 function_address = self.ida_proxy.LocByName(self.ida_proxy.GetFunctionName(block.start_ea))
-                if function_address not in tmp_dict.keys():
+                if function_address not in list(tmp_dict.keys()):
                     tmp_dict[function_address] = {"function_address": function_address, "num_blocks": 1, \
                         "num_log_arith_instructions": block.num_log_arit_instructions}
                 else:
                     tmp_dict[function_address]["num_blocks"] += 1
                     tmp_dict[function_address]["num_log_arith_instructions"] += block.num_log_arit_instructions
-            return [tmp_dict[key] for key in tmp_dict.keys()]
+            return [tmp_dict[key] for key in list(tmp_dict.keys())]
         else:
             return aritlog_blocks
 
@@ -430,6 +430,6 @@ class CryptoIdentificationWidget(QMainWindow):
                     else:
                         self.ida_proxy.MakeRptCmt(addr, place.getSignatureNames())
                 else:
-                    print "CryptoIdentificationWidget: Skipping 0x%x (%s), already has comment: \"%s\"" % \
-                        (addr, place.getSignatureNames(), self.ida_proxy.RptCmt(addr))
+                    print("CryptoIdentificationWidget: Skipping 0x%x (%s), already has comment: \"%s\"" % \
+                        (addr, place.getSignatureNames(), self.ida_proxy.RptCmt(addr)))
 

@@ -31,6 +31,7 @@ QtWidgets = QtShim.get_QtWidgets()
 
 import idc
 import idaapi
+import ida_nalt
 from idaapi import PluginForm, plugin_t
 
 import idascope.config as config
@@ -78,18 +79,18 @@ class IDAscopeForm(PluginForm):
         try:
             root_dir = configuration["paths"]["idascope_root_dir"]
             if not self.cc.os.path.exists(root_dir) or not "IDAscope.py" in self.cc.os.listdir(root_dir):
-                print "[!] IDAscope.py is not present in root directory specified in \"config.py\", " \
-                     + "trying to resolve path..."
+                print("[!] IDAscope.py is not present in root directory specified in \"config.py\", " \
+                     + "trying to resolve path...")
                 resolved_pathname = self.cc.os.path.dirname(self.cc.sys.argv[0])
                 if "IDAscope.py" in self.cc.os.listdir(resolved_pathname):
-                    print "[+] IDAscope root directory successfully resolved."
+                    print("[+] IDAscope root directory successfully resolved.")
                     configuration["paths"]["idascope_root_dir"] = resolved_pathname
                 else:
-                    print "[-] IDAscope.py is not resolvable!"
+                    print("[-] IDAscope.py is not resolvable!")
                     raise Exception()
         except:
-            print "[!] IDAscope config is broken. Could not locate root directory. " \
-                 + "Try setting the field \"idascope_root_dir\" to the path where \"IDAscope.py\" is located."
+            print("[!] IDAscope config is broken. Could not locate root directory. " \
+                 + "Try setting the field \"idascope_root_dir\" to the path where \"IDAscope.py\" is located.")
             self.cc.sys.exit(-1)
 
     def setupSharedModules(self):
@@ -104,7 +105,7 @@ class IDAscopeForm(PluginForm):
         self.winapi_provider = WinApiProvider(self.config)
         self.crypto_identifier = CryptoIdentifier(self.config)
         self.yara_scanner = YaraScanner(self.config)
-        print ("[\\] this took %3.2f seconds.\n" % (self.cc.time.time() - time_before))
+        print(("[\\] this took %3.2f seconds.\n" % (self.cc.time.time() - time_before)))
 
     def setupWidgets(self):
         """
@@ -118,7 +119,7 @@ class IDAscopeForm(PluginForm):
         self.idascope_widgets.append(CryptoIdentificationWidget(self))
         self.idascope_widgets.append(YaraScannerWidget(self))
         self.setupIDAscopeForm()
-        print ("[\\] this took %3.2f seconds.\n" % (self.cc.time.time() - time_before))
+        print(("[\\] this took %3.2f seconds.\n" % (self.cc.time.time() - time_before)))
 
     def setupIDAscopeForm(self):
         """
@@ -157,7 +158,7 @@ class IDAscopeForm(PluginForm):
                + "#############################################\n" \
                + " by Daniel Plohmann and Alexander Hanel      \n" \
                + "#############################################\n"
-        print banner
+        print(banner)
         print ("[+] Loading simpliFiRE.IDAscope")
 
     def OnClose(self, form):
@@ -168,12 +169,12 @@ class IDAscopeForm(PluginForm):
         del IDASCOPE
 
     def Show(self):
-        if idc.GetInputMD5() is None:
+        if ida_nalt.retrieve_input_file_md5() is None:
             return
         else:
             return PluginForm.Show(self,
                 NAME,
-                options=(PluginForm.FORM_CLOSE_LATER | PluginForm.FORM_RESTORE | PluginForm.FORM_SAVE))
+                options=(PluginForm.WCLS_CLOSE_LATER | PluginForm.WOPN_RESTORE | PluginForm.WCLS_SAVE))
 
 ################################################################################
 # functionality offered to IDAscope's widgets
@@ -259,8 +260,8 @@ def main():
         IDASCOPE = IDAscopeForm()
 
     if IDASCOPE.config.idascope_plugin_only:
-        print "IDAscope: configured as plugin-only mode, ignoring main function of script. " \
-             + "This can be changed in \"idascope/config.py\"."
+        print("IDAscope: configured as plugin-only mode, ignoring main function of script. " \
+             + "This can be changed in \"idascope/config.py\".")
     else:
         IDASCOPE.Show()
 

@@ -26,9 +26,9 @@
 
 import json
 
-from IdaProxy import IdaProxy
+from .IdaProxy import IdaProxy
 
-from helpers import JsonHelper
+from .helpers import JsonHelper
 
 
     ## 6 nice opposing colors as used in IDAscope standard config
@@ -69,8 +69,11 @@ class DocumentationHelper():
         @type config_filename: str
         """
         config_file = open(config_filename, "r")
+        print("IDAScope Documentation helper config filename: %s " % config_filename)
         config = config_file.read()
-        parsed_config = json.loads(config, object_hook=JsonHelper.decode_dict)
+        #parsed_config = json.loads(config, object_hook=JsonHelper.decode_dict)
+        parsed_config = json.loads(config)
+        print(parsed_config.keys())
         self.default_neutral_color = int(parsed_config["default_neutral_color"], 16)
         self.default_base_color = int(parsed_config["default_base_color"], 16)
         self.default_highlight_color = int(parsed_config["default_highlight_color"], 16)
@@ -96,7 +99,7 @@ class DocumentationHelper():
         for group in config["semantic_groups"]:
             if group["tag"] == target_group:
                 return (group["base_color"], group["highlight_color"])
-        print "[-] Failed to get colors for group \"%s\" - you might want to check your semantics file." % target_group
+        print("[-] Failed to get colors for group \"%s\" - you might want to check your semantics file." % target_group)
         return (self.default_base_color, self.default_highlight_color)
 
     def uncolorAll(self):
@@ -107,7 +110,7 @@ class DocumentationHelper():
             for function_address in self.ida_proxy.Functions(self.ida_proxy.SegStart(seg_ea), \
                 self.ida_proxy.SegEnd(seg_ea)):
                 for block in self.ida_proxy.FlowChart(self.ida_proxy.get_func(function_address)):
-                    for head in self.ida_proxy.Heads(block.startEA, block.endEA):
+                    for head in self.ida_proxy.Heads(block.start_ea, block.end_ea):
                         self.colorInstruction(head, 0xFFFFFF, refresh=False)
         self.ida_proxy.refresh_idaview_anyway()
 
@@ -137,8 +140,8 @@ class DocumentationHelper():
         """
         function_chart = self.ida_proxy.FlowChart(self.ida_proxy.get_func(address))
         for block in function_chart:
-            if block.startEA <= address < block.endEA:
-                for head in self.ida_proxy.Heads(block.startEA, block.endEA):
+            if block.start_ea <= address < block.end_ea:
+                for head in self.ida_proxy.Heads(block.start_ea, block.end_ea):
                     self.colorInstruction(head, color, refresh)
 
     def getNextColorScheme(self):
@@ -181,7 +184,7 @@ class DocumentationHelper():
         else:
             tags_in_block = [item[1] for item in tagged_addresses_in_block]
             colors_in_block = set([self.color_map[tags_in_block[index]]["base_color"] \
-                for index in xrange(len(tags_in_block))])
+                for index in range(len(tags_in_block))])
             if len(colors_in_block) == 1:
                 return colors_in_block.pop()
             else:
@@ -193,15 +196,15 @@ class DocumentationHelper():
         @param scan_result: result of a scan as performed by SemanticIdentifier
         @type scan_result: a dictionary with key/value entries of the following form: (address, [FunctionContext])
         """
-        for function_address in scan_result.keys():
+        for function_address in list(scan_result.keys()):
             tagged_addresses_in_function = scan_result[function_address].getAllTaggedAddresses()
             function_chart = self.ida_proxy.FlowChart(self.ida_proxy.get_func(function_address))
             for basic_block in function_chart:
                 tagged_addresses_in_block = [(addr, tagged_addresses_in_function[addr]) for addr in \
-                    tagged_addresses_in_function.keys() if addr in xrange(basic_block.startEA, basic_block.endEA)]
+                    list(tagged_addresses_in_function.keys()) if addr in range(basic_block.start_ea, basic_block.end_ea)]
                 if len(tagged_addresses_in_block) > 0:
                     base_color = self.selectBaseColor(tagged_addresses_in_block)
-                    self.colorBasicBlock(basic_block.startEA, base_color, refresh=False)
+                    self.colorBasicBlock(basic_block.start_ea, base_color, refresh=False)
                     for tagged_address in tagged_addresses_in_block:
                         highlight_color = self.selectHighlightColor(tagged_address[1])
                         self.colorInstruction(tagged_address[0], highlight_color, refresh=False)
@@ -223,8 +226,8 @@ class DocumentationHelper():
         next_instruction = self.ida_proxy.minEA()
         while next_instruction != self.ida_proxy.BAD_ADDR:
             next_instruction = self.getNextNonFuncInstruction(next_instruction)
-            print("[+] Fixed undefined code to function @ [%08x]" % \
-                (next_instruction))
+            print(("[+] Fixed undefined code to function @ [%08x]" % \
+                (next_instruction)))
             self.ida_proxy.MakeFunction(next_instruction)
         return
 
@@ -245,8 +248,8 @@ class DocumentationHelper():
                     self.ida_proxy.GetOperandValue(instruction_after_push, 0) == 5 and \
                     self.ida_proxy.GetOpType(instruction_after_push, 1) == 1 and \
                     self.ida_proxy.GetOperandValue(instruction_after_push, 1) == 4:
-                        print("[+] Fixed undefined code with function prologue (push ebp; mov ebp, esp) to function " \
-                            + "@ [%08x]" % (next_instruction))
+                        print(("[+] Fixed undefined code with function prologue (push ebp; mov ebp, esp) to function " \
+                            + "@ [%08x]" % (next_instruction)))
                         self.ida_proxy.MakeFunction(next_instruction)
 
     def convertDataWithPrologueToCode(self):
@@ -258,8 +261,8 @@ class DocumentationHelper():
                 flags = self.ida_proxy.GetFlags(signature_hit)
                 if not self.ida_proxy.isCode(flags):
                     self.ida_proxy.MakeFunction(signature_hit)
-                    print("[+] Fixed undefined data with potential function prologue (push ebp; mov ebp, esp) to function " \
-                            + "@ [%08x]" % (signature_hit))
+                    print(("[+] Fixed undefined data with potential function prologue (push ebp; mov ebp, esp) to function " \
+                            + "@ [%08x]" % (signature_hit)))
                 current_seg = signature_hit + 3 + 1
             else:
                 current_seg = self.ida_proxy.NextSeg(seg_end)

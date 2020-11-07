@@ -20,22 +20,22 @@ class GraphHelper():
         strongly_connected = self.calculateStronglyConnectedComponents(graph["nodes"])
         non_trivial_loops = [component for component in strongly_connected if len(component) > 1]
         if len(non_trivial_loops) > 0:
-            print "here are loops: 0x%x >> %s" % \
-                (graph["root"], ", ".join(["0x%x" % addr for addr in non_trivial_loops[0]]))
+            print("here are loops: 0x%x >> %s" % \
+                (graph["root"], ", ".join(["0x%x" % addr for addr in non_trivial_loops[0]])))
             self.renderGraph(graph)
 
     def renderGraph(self, graph):
-        for function_addr in graph["nodes"].keys():
+        for function_addr in list(graph["nodes"].keys()):
             refs = graph["nodes"][function_addr]
-            print "0x%x (%s)" % (function_addr, self.ida_proxy.GetFunctionName(function_addr))
+            print("0x%x (%s)" % (function_addr, self.ida_proxy.GetFunctionName(function_addr)))
             for ref in refs:
-                print "  > 0x%x (%s)" % (ref, self.ida_proxy.GetFunctionName(ref))
+                print("  > 0x%x (%s)" % (ref, self.ida_proxy.GetFunctionName(ref)))
 
     def calcAvgOutDegree(self, graph):
         out_refs = 0
-        for function_addr in graph["nodes"].keys():
+        for function_addr in list(graph["nodes"].keys()):
             out_refs += len(graph["nodes"][function_addr])
-        print "0x%x -> %2.2f edges per node" % (graph["root"], 1.0 * out_refs / len(graph["nodes"].keys()))
+        print("0x%x -> %2.2f edges per node" % (graph["root"], 1.0 * out_refs / len(list(graph["nodes"].keys()))))
 
     def calculateStronglyConnectedComponents(self, graph):
         """

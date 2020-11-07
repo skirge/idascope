@@ -113,7 +113,7 @@ class ApiManager():
             maxDepth -= 1
 
         if missingArgs > 0:
-            print '[WARNING]: Not possible to track all arguments for ', "0x%x" % api_addr
+            print('[WARNING]: Not possible to track all arguments for ', "0x%x" % api_addr)
         return args
 
     def _getPush(self, address, arg_count):

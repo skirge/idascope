@@ -371,10 +371,10 @@ class PatternManager:
         tokens_to_names = {}
         for signature in self._getStaticPatternKeys():
             tokenized = [(signature[index:index + pattern_length], self.signatures[signature]) for index \
-                in xrange(0, len(signature), pattern_length)]
+                in range(0, len(signature), pattern_length)]
             for token in tokenized:
                 if not self._isZeroToken(token[0]):
-                    if token[0] in tokens_to_names.keys():
+                    if token[0] in list(tokens_to_names.keys()):
                         tokens_to_names[token[0]].append(token[1])
                     else:
                         tokens_to_names[token[0]] = [token[1]]
@@ -397,7 +397,7 @@ class PatternManager:
         @return (list) of keys from PatternManager.signatures of static keys
         """
         static_signature_keys = []
-        for signature in self.signatures.keys():
+        for signature in list(self.signatures.keys()):
             if not isinstance(signature, self.cc.VariablePattern):
                 static_signature_keys.append(signature)
             # extend self.signatures by dword padded version of MutablePatterns
@@ -413,7 +413,7 @@ class PatternManager:
         @return: (dict) of variable signatures as keys with signature names as values
         """
         variable_signatures_to_names = {}
-        for signature in self.signatures.keys():
+        for signature in list(self.signatures.keys()):
             if isinstance(signature, self.cc.VariablePattern):
                 variable_signatures_to_names[self.signatures[signature]] = signature
         return variable_signatures_to_names
@@ -425,5 +425,5 @@ class PatternManager:
         print ("[+] PatternManager has the following signatures: ")
         occurrences = self.get_signature_occurrences()
         for signature in sorted(occurrences.keys()):
-            print ("     %s: %d") % (signature, occurrences[signature])
+            print(("     %s: %d") % (signature, occurrences[signature]))
 
